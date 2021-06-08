@@ -6,6 +6,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import it.polito.tdp.PremierLeague.model.Action;
 import it.polito.tdp.PremierLeague.model.Match;
 import it.polito.tdp.PremierLeague.model.Player;
@@ -36,9 +38,9 @@ public class PremierLeagueDAO {
 		}
 	}
 	
-	public List<Team> listAllTeams(){
-		String sql = "SELECT * FROM Teams";
-		List<Team> result = new ArrayList<Team>();
+	public void listAllTeams(Map<Integer, Team> map){
+		String sql = "SELECT * FROM Teams ";
+		//List<Team> result = new ArrayList<Team>();
 		Connection conn = DBConnect.getConnection();
 
 		try {
@@ -47,14 +49,15 @@ public class PremierLeagueDAO {
 			while (res.next()) {
 
 				Team team = new Team(res.getInt("TeamID"), res.getString("Name"));
-				result.add(team);
+				map.put(team.getTeamID(), team);
+				//result.add(team);
 			}
 			conn.close();
-			return result;
+			//return result;
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
-			return null;
+			//return null;
 		}
 	}
 	
@@ -109,6 +112,39 @@ public class PremierLeagueDAO {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;
+		}
+	}
+	
+	public void classifica(Map<Integer, Team> map){
+		String sql = "SELECT MatchID, TeamHomeID, TeamAwayID, ResultOfTeamHome "+
+					 "FROM matches "+
+					 "ORDER BY TeamHomeID";
+		//List<Team> result = new ArrayList<Team>();
+		Connection conn = DBConnect.getConnection();
+
+		try {
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet res = st.executeQuery();
+			while (res.next()) {
+
+				Team home = map.get(res.getInt("TeamHomeID"));
+				Team away = map.get(res.getInt("TeamAwayID"));
+				
+				if(res.getInt("ResultOfTeamHome") > 0) 
+					home.setPunti(home.getPunti()+3);
+				else if(res.getInt("ResultOfTeamHome") == 0) {
+					home.setPunti(home.getPunti()+1);
+					away.setPunti(away.getPunti()+1);
+				} else
+					away.setPunti(away.getPunti()+3);
+				
+			}
+			conn.close();
+			//return result;
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			//return null;
 		}
 	}
 	
